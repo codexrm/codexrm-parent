@@ -1,0 +1,37 @@
+services:
+  db:
+    image: postgres:16
+    container_name: codexrm-db
+    environment:
+      POSTGRES_DB: codexrm
+      POSTGRES_USER: codexrm
+      POSTGRES_PASSWORD: codexrm
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U codexrm"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  server:
+    build:
+      context: .
+      dockerfile: codexrm-server/Dockerfile
+    container_name: codexrm-server
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      JWT_SECRET: 8f3a1b5c9e7d4f2a6b8c0d1e3f5a7b9c2d4e6f8a0b1c3d5e7f9a2b4c6d8e0f
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/codexrm
+      SPRING_DATASOURCE_USERNAME: codexrm
+      SPRING_DATASOURCE_PASSWORD: codexrm
+    ports:
+      - "8081:8080"
+
+volumes:
+  postgres_data:
